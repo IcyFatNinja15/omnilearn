@@ -93,7 +93,7 @@
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="badge-list-container">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -139,7 +139,7 @@
     </header>
 
     <main id="app-root" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        </main>
+    </main>
 
     <footer class="bg-white border-t border-gray-200 mt-auto">
         <div class="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm">
@@ -148,50 +148,225 @@
     </footer>
 
     <script>
-        // --- Badge Data (Updated) ---
-        
+        // --- Badge Data ---
         const BADGES = [
             { id: 'first_step', title: 'First Step', icon: 'footprints', desc: 'Complete your first lesson module.', color: 'text-blue-500 bg-blue-100' },
             { id: 'quiz_master', title: 'Quiz Master', icon: 'trophy', desc: 'Score 100% on any quiz.', color: 'text-yellow-600 bg-yellow-100' },
             { id: 'dedicated', title: 'Dedicated', icon: 'flame', desc: 'Complete 5 lessons.', color: 'text-orange-500 bg-orange-100' },
             { id: 'scholar', title: 'True Scholar', icon: 'graduation-cap', desc: 'Complete 20 lessons total.', color: 'text-purple-600 bg-purple-100' },
-            // Subject Specific
             { id: 'math_novice', title: 'Number Cruncher', icon: 'calculator', desc: 'Complete 3 Mathematics lessons.', color: 'text-blue-600 bg-blue-50' },
             { id: 'science_novice', title: 'Lab Assistant', icon: 'flask-conical', desc: 'Complete 3 Science lessons.', color: 'text-emerald-600 bg-emerald-50' },
             { id: 'history_novice', title: 'Time Traveler', icon: 'scroll-text', desc: 'Complete 3 History lessons.', color: 'text-amber-600 bg-amber-50' },
-            // New High Level Badges
             { id: 'halfway_hero', title: 'Halfway Hero', icon: 'mountain-snow', desc: 'Complete 90 lessons (50% of curriculum).', color: 'text-pink-600 bg-pink-100' },
             { id: 'omniscient', title: 'The Omniscient', icon: 'crown', desc: 'Complete ALL 180 lessons.', color: 'text-indigo-800 bg-yellow-300' }
         ];
 
-        const generateQuiz = (topicTitle) => {
+        // --- NEW: Helper to get Specific Math Examples based on Topic ---
+        const getMathExampleData = (title) => {
+            const t = title.toLowerCase();
+
+            // Geometry
+            if (t.includes('geometry') || t.includes('circle') || t.includes('plane') || t.includes('solid')) {
+                return {
+                    concept: "Area Calculation",
+                    desc: "In geometry, we often calculate the space inside a shape. For a rectangle, we multiply width by height.",
+                    problem: "Area = w × h. If w = 5 and h = 4, find Area.",
+                    step1: "Identify variables: w = 5, h = 4.",
+                    step1_math: "A = 5 × 4",
+                    step2: "Perform multiplication.",
+                    step2_math: "5 × 4 = 20",
+                    result: "Area = 20 units²"
+                };
+            }
+            // Calculus / Derivatives
+            else if (t.includes('calculus') || t.includes('derivative') || t.includes('limits')) {
+                return {
+                    concept: "Power Rule",
+                    desc: "To find the derivative of a term like x^n, we multiply by the power and subtract 1 from the exponent.",
+                    problem: "Find f'(x) if f(x) = x^3",
+                    step1: "Bring the power (3) to the front.",
+                    step1_math: "3 · x^3",
+                    step2: "Subtract 1 from the exponent.",
+                    step2_math: "3 · x^(3-1)",
+                    result: "f'(x) = 3x²"
+                };
+            }
+            // Statistics
+            else if (t.includes('statistics') || t.includes('probability') || t.includes('mean')) {
+                return {
+                    concept: "Calculating the Mean",
+                    desc: "The mean is the average of a set of numbers. Add them up and divide by the count.",
+                    problem: "Find the mean of: {2, 4, 9}",
+                    step1: "Sum the numbers: 2 + 4 + 9.",
+                    step1_math: "Sum = 15",
+                    step2: "Divide by the count (3).",
+                    step2_math: "15 / 3",
+                    result: "Mean = 5"
+                };
+            }
+            // Trigonometry
+            else if (t.includes('trigonometry') || t.includes('triangle')) {
+                return {
+                    concept: "Pythagorean Theorem",
+                    desc: "In a right triangle, a² + b² = c².",
+                    problem: "If a=3 and b=4, find c.",
+                    step1: "Square the known sides.",
+                    step1_math: "3² + 4² = 9 + 16 = 25",
+                    step2: "Take the square root of the sum.",
+                    step2_math: "√25",
+                    result: "c = 5"
+                };
+            }
+            // Default Algebra (Linear Equations)
+            else {
+                return {
+                    concept: "The Balance Method",
+                    desc: "An equation is like a scale. To keep it balanced, operations must be applied equally to both sides.",
+                    problem: "3x + 7 = 22",
+                    step1: "Isolate term with x (subtract 7).",
+                    step1_math: "3x = 15",
+                    step2: "Divide by 3.",
+                    step2_math: "x = 15 / 3",
+                    result: "x = 5"
+                };
+            }
+        };
+
+        // --- NEW: Helper to get Specific Quizzes based on Topic ---
+        const topicQuizzes = {
+            // Examples of manually defined specific quizzes
+            "Scientific Method": [
+                { question: "What is the first step of the Scientific Method?", options: ["Conclusion", "Observation", "Experiment", "Publication"], correct: 1 },
+                { question: "A prediction that can be tested is called a:", options: ["Theory", "Fact", "Hypothesis", "Law"], correct: 2 },
+                { question: "Data measured in numbers is:", options: ["Qualitative", "Quantitative", "Subjective", "Abstract"], correct: 1 }
+            ],
+            "Cell Biology": [
+                { question: "What is the 'powerhouse' of the cell?", options: ["Nucleus", "Mitochondria", "Ribosome", "Membrane"], correct: 1 },
+                { question: "Which organelle contains DNA?", options: ["Nucleus", "Golgi", "Lysosome", "Wall"], correct: 0 },
+                { question: "Plant cells differ from animal cells because they have:", options: ["A Nucleus", "Chloroplasts", "Mitochondria", "DNA"], correct: 1 }
+            ],
+            "Algebra I": [
+                { question: "Solve for x: x + 5 = 10", options: ["2", "5", "10", "15"], correct: 1 },
+                { question: "What represents an unknown value?", options: ["Constant", "Variable", "Coefficient", "Operator"], correct: 1 },
+                { question: "Which is an algebraic expression?", options: ["5", "x + 2", "equals", "7"], correct: 1 }
+            ],
+            "Ancient Egypt": [
+                { question: "Which river was vital to Ancient Egypt?", options: ["Amazon", "Nile", "Tigris", "Danube"], correct: 1 },
+                { question: "Egyptian writing is called:", options: ["Cuneiform", "Hieroglyphics", "Latin", "Sanskrit"], correct: 1 },
+                { question: "Who was the ruler of Egypt?", options: ["President", "King", "Pharaoh", "Emperor"], correct: 2 }
+            ]
+        };
+
+        const generateQuiz = (topicTitle, subjectId) => {
+            // 1. Check if we have a manually written quiz for this exact topic
+            if (topicQuizzes[topicTitle]) {
+                return topicQuizzes[topicTitle];
+            }
+
+            // 2. If not, generate a "Smart" generic quiz that uses the topic title to feel specific
+            // MATH FALLBACK
+            if (subjectId === 'maths') {
+                return [
+                    { question: `Which concept is central to ${topicTitle}?`, options: ["Spelling", "Logic and Number Relationships", "Photosynthesis", "Historical Dates"], correct: 1 },
+                    { question: `In ${topicTitle}, what do we usually solve for?`, options: ["Unknowns/Variables", "Opinions", "Colors", "Feelings"], correct: 0 },
+                    { question: "Which tool is most useful here?", options: ["Microscope", "Calculator/Formula", "Map", "Telescope"], correct: 1 }
+                ];
+            }
+            // SCIENCE FALLBACK
+            if (subjectId === 'science') {
+                return [
+                    { question: `What is the primary method of study in ${topicTitle}?`, options: ["Observation and Experimentation", "Reading Fiction", "Debate", "Guessing"], correct: 0 },
+                    { question: `Is ${topicTitle} considered a branch of natural science?`, options: ["Yes", "No", "Maybe", "Unknown"], correct: 0 },
+                    { question: "Which of these is a key factor in this field?", options: ["Evidence", "Magic", "Opinion", "Rumor"], correct: 0 }
+                ];
+            }
+            // HISTORY FALLBACK
+            if (subjectId === 'history') {
+                return [
+                    { question: `Which era does ${topicTitle} belong to?`, options: ["The Future", "The Past", "Current Events", "Fiction"], correct: 1 },
+                    { question: "What source would be most valuable for this topic?", options: ["Primary Source Documents", "A Comic Book", "A Tweet", "A Crystal Ball"], correct: 0 },
+                    { question: `Why do we study ${topicTitle}?`, options: ["To memorize useless dates", "To understand context and human behavior", "To predict stock prices", "For math practice"], correct: 1 }
+                ];
+            }
+            // GENERIC FALLBACK (English, Geo, Religion, etc)
             return [
-                {
-                    question: `What is the primary focus of the module on ${topicTitle}?`,
-                    options: [
-                        `To study the ancient, unrelated history of ${topicTitle}`,
-                        `The fundamental principles and mechanisms of ${topicTitle}`,
-                        `The purely political impact of ${topicTitle}`,
-                        `None of the above`
-                    ],
-                    correct: 1
-                },
-                {
-                    question: "Which concept was described as a core building block in this lesson?",
-                    options: ["Fundamental Axiom A", "The Chaos Theory", "The Solar Cycle", "Literary Analysis"],
-                    correct: 0
-                },
-                {
-                    question: "According to the text, why is this topic considered significant?",
-                    options: ["It has no real-world application", "It is only useful for academics", "It bridges theory and reality", "It is outdated"],
-                    correct: 2
-                }
+                { question: `What is the main focus of ${topicTitle}?`, options: ["Random facts", `The core principles of ${topicTitle}`, "Cooking", "Sports"], correct: 1 },
+                { question: "True or False: This topic requires critical thinking.", options: ["True", "False"], correct: 0 },
+                { question: `Mastering ${topicTitle} helps you:`, options: ["Understand the subject better", "Forget everything", "Sleep", "Run faster"], correct: 0 }
             ];
         };
 
-        // --- Data Generation Helper Functions ---
+        // --- Content Generator with Math Examples ---
+        const generateSpecificContent = (topicId, title, subjectName) => {
+            // Check if the topic belongs to Maths
+            if (topicId.startsWith('maths')) {
+                // Get the specific example data for this math topic
+                const data = getMathExampleData(title);
 
-        const generateLongContent = (title, subjectName) => {
+                return `
+                    <div class="space-y-8">
+                        <p class="text-xl font-medium text-gray-800 leading-relaxed">
+                            Mastering <strong>${title}</strong> is essential for advanced problem solving. 
+                            This module breaks down the variables, constants, and the logic required to solve complex problems.
+                        </p>
+                        
+                        <h3>1. Understanding the Core Concept: ${data.concept}</h3>
+                        <p>${data.desc}</p>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm">
+                            <h4 class="font-bold text-blue-900 mb-2 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> Key Rule</h4>
+                            <p class="text-blue-800">Always ensure you identify your variables before applying the formula.</p>
+                        </div>
+
+                        <h3>2. Example Question: ${data.concept}</h3>
+                        <p><strong>Problem:</strong> ${data.problem}</p>
+                        
+                        <div class="text-2xl md:text-3xl font-mono bg-white text-indigo-700 p-8 rounded-xl mb-6 text-center shadow-md border border-gray-200">
+                            ${data.problem.split('.')[0]}
+                        </div>
+
+                        <h4 class="font-bold text-gray-900 mb-4">Step-by-Step Solution:</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                                <span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Step 1</span>
+                                <div>
+                                    <p class="font-bold text-gray-900">${data.step1}</p>
+                                    <code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step1_math}</code>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                                <span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Step 2</span>
+                                <div>
+                                    <p class="font-bold text-gray-900">${data.step2}</p>
+                                    <code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step2_math}</code>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm">
+                                <span class="bg-green-200 text-green-800 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Result</span>
+                                <div>
+                                    <p class="font-bold text-xl text-green-800 font-mono">${data.result}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3>3. Advanced Application</h3>
+                        <p>When dealing with higher-order terms, such as in <strong>Quadratic Functions</strong>, we often employ specific formulas. The logic remains the same: simplify, isolate, and solve.</p>
+                        
+                        <div class="my-6 p-4 border rounded-lg bg-gray-50 text-center text-sm text-gray-500 italic">
+                             
+
+[Image of quadratic formula]
+
+                        </div>
+
+                        <p>In conclusion, whether you are solving for simple integers or complex roots, the fundamental principles of algebra apply.</p>
+                    </div>
+                `;
+            }
+
+            // Fallback for non-math subjects
             return `
                 <div class="space-y-6">
                     <p class="text-xl font-medium text-gray-800 leading-relaxed">
@@ -235,15 +410,21 @@
 
         const subjectsData = {};
 
+        // Loop to generate content
         subjectsList.forEach(sub => {
-            const topics = subtopicLists[sub.id].map((title, index) => ({
-                id: `${sub.id}_${index}`,
-                parentId: sub.id,
-                title: title,
-                description: `Comprehensive module covering ${title}.`,
-                content: generateLongContent(title, sub.title),
-                quiz: generateQuiz(title)
-            }));
+            const topics = subtopicLists[sub.id].map((title, index) => {
+                const topicId = `${sub.id}_${index}`;
+                return {
+                    id: topicId,
+                    parentId: sub.id,
+                    title: title,
+                    description: `Comprehensive module covering ${title}.`,
+                    // Use updated content generator
+                    content: generateSpecificContent(topicId, title, sub.title),
+                    // Use updated quiz generator
+                    quiz: generateQuiz(title, sub.id)
+                };
+            });
 
             subjectsData[sub.id] = { ...sub, lightColor: `bg-${sub.color}-50`, textColor: `text-${sub.color}-600`, bgColor: `bg-${sub.color}-500`, subtopics: topics };
         });
@@ -300,7 +481,6 @@
             },
 
             selectLesson(id, subjectId) {
-                // Determine subject ID if not provided (for search results)
                 if (!subjectId) {
                     const parts = id.split('_');
                     subjectId = parts[0];
@@ -340,16 +520,13 @@
                 const completedCount = this.state.completedLessons.length;
                 const newBadges = [];
 
-                // Calculate total lessons dynamically
                 let totalLessons = 0;
                 Object.values(subjectsData).forEach(s => totalLessons += s.subtopics.length);
 
-                // Helper to count lessons per subject
                 const countPerSubject = (subjId) => {
                     return this.state.completedLessons.filter(lId => lId.startsWith(subjId)).length;
                 };
 
-                // Badge Rules
                 if (completedCount >= 1 && !this.hasBadge('first_step')) newBadges.push('first_step');
                 if (completedCount >= 5 && !this.hasBadge('dedicated')) newBadges.push('dedicated');
                 if (completedCount >= 20 && !this.hasBadge('scholar')) newBadges.push('scholar');
@@ -364,7 +541,6 @@
                     this.state.earnedBadges = [...this.state.earnedBadges, ...newBadges];
                     localStorage.setItem('omni_badges', JSON.stringify(this.state.earnedBadges));
                     
-                    // Trigger animations for new badges
                     newBadges.forEach(bId => {
                         const badge = BADGES.find(b => b.id === bId);
                         this.showToast('Badge Unlocked!', badge.title, badge.icon);
@@ -402,7 +578,7 @@
                     this.showToast('Badge Unlocked!', 'Quiz Master', 'trophy');
                 }
 
-                if (correct >= 2) { // Pass threshold
+                if (correct >= 2) { 
                     this.markComplete(lesson.id, true);
                     this.showToast('Quiz Passed!', `You scored ${correct}/${lesson.quiz.length}`);
                 }
