@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniLearn - Comprehensive Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c7c7; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+
+        .prose p {
+            margin-bottom: 1.5em;
+            line-height: 1.8;
+            color: #374151;
+        }
+        
+        .prose h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1.5em;
+        }
+
+        .prose li {
+            margin-bottom: 0.5em;
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col relative">
+
+    <div id="toast-container" class="fixed top-24 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <div id="badge-modal" class="fixed inset-0 z-[60] hidden">
+        <div class="modal-backdrop absolute inset-0 transition-opacity" onclick="app.toggleBadgeModal(false)"></div>
+        <div class="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl transform transition-transform slide-in-right flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="award" class="w-6 h-6"></i> My Badges
+                </h2>
+                <button onclick="app.toggleBadgeModal(false)" class="hover:bg-white/20 p-2 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="badge-list-container">
+                </div>
+        </div>
+    </div>
+
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0" onclick="app.goHome()">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <i data-lucide="brain" class="w-6 h-6"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 tracking-tight hidden sm:block">OmniLearn</h1>
+            </div>
+
+            <div class="flex-1 max-w-md relative hidden md:block">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
+                </div>
+                <input type="text" 
+                       id="global-search"
+                       placeholder="Search lessons (e.g., 'Algebra', 'Roman Empire')..." 
+                       oninput="app.handleSearch(this.value)"
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all">
+            </div>
+
+            <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
+                <button onclick="app.goHome()" class="hover:text-indigo-600 transition-colors hidden sm:block">Subjects</button>
+                <button onclick="app.goToLibrary()" class="hover:text-indigo-600 transition-colors">Library</button>
+                <button onclick="app.toggleBadgeModal(true)" class="hover:text-indigo-600 transition-colors">Achievements</button>
+                
+                <div class="flex items-center gap-3 cursor-pointer ml-2" onclick="app.toggleBadgeModal(true)">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md hover:ring-2 ring-offset-2 ring-indigo-500 transition-all">
+                        JS
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <div class="md:hidden px-4 pb-4">
+             <input type="text" 
+               placeholder="Search..." 
+               oninput="app.handleSearch(this.value)"
+               class="block w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+    </header>
+
+    <main id="app-root" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm">
+            &copy; 2024 OmniLearn Education Platform. Content generated for demonstration.
+        </div>
+    </footer>
+
+    <script>
+        // --- Badge Data (Updated) ---
+        
+        const BADGES = [
+            { id: 'first_step', title: 'First Step', icon: 'footprints', desc: 'Complete your first lesson module.', color: 'text-blue-500 bg-blue-100' },
+            { id: 'quiz_master', title: 'Quiz Master', icon: 'trophy', desc: 'Score 100% on any quiz.', color: 'text-yellow-600 bg-yellow-100' },
+            { id: 'dedicated', title: 'Dedicated', icon: 'flame', desc: 'Complete 5 lessons.', color: 'text-orange-500 bg-orange-100' },
+            { id: 'scholar', title: 'True Scholar', icon: 'graduation-cap', desc: 'Complete 20 lessons total.', color: 'text-purple-600 bg-purple-100' },
+            // Subject Specific
+            { id: 'math_novice', title: 'Number Cruncher', icon: 'calculator', desc: 'Complete 3 Mathematics lessons.', color: 'text-blue-600 bg-blue-50' },
+            { id: 'science_novice', title: 'Lab Assistant', icon: 'flask-conical', desc: 'Complete 3 Science lessons.', color: 'text-emerald-600 bg-emerald-50' },
+            { id: 'history_novice', title: 'Time Traveler', icon: 'scroll-text', desc: 'Complete 3 History lessons.', color: 'text-amber-600 bg-amber-50' },
+            // New High Level Badges
+            { id: 'halfway_hero', title: 'Halfway Hero', icon: 'mountain-snow', desc: 'Complete 90 lessons (50% of curriculum).', color: 'text-pink-600 bg-pink-100' },
+            { id: 'omniscient', title: 'The Omniscient', icon: 'crown', desc: 'Complete ALL 180 lessons.', color: 'text-indigo-800 bg-yellow-300' }
+        ];
+
+        const generateQuiz = (topicTitle) => {
+            return [
+                {
+                    question: `What is the primary focus of the module on ${topicTitle}?`,
+                    options: [
+                        `To study the ancient, unrelated history of ${topicTitle}`,
+                        `The fundamental principles and mechanisms of ${topicTitle}`,
+                        `The purely political impact of ${topicTitle}`,
+                        `None of the above`
+                    ],
+                    correct: 1
+                },
+                {
+                    question: "Which concept was described as a core building block in this lesson?",
+                    options: ["Fundamental Axiom A", "The Chaos Theory", "The Solar Cycle", "Literary Analysis"],
+                    correct: 0
+                },
+                {
+                    question: "According to the text, why is this topic considered significant?",
+                    options: ["It has no real-world application", "It is only useful for academics", "It bridges theory and reality", "It is outdated"],
+                    correct: 2
+                }
+            ];
+        };
+
+        // --- Data Generation Helper Functions ---
+
+        const generateLongContent = (title, subjectName) => {
+            return `
+                <div class="space-y-6">
+                    <p class="text-xl font-medium text-gray-800 leading-relaxed">
+                        Welcome to the comprehensive module on <strong>${title}</strong>. This section serves as a deep dive into the core principles, historical context, and modern applications of this critical topic within the field of ${subjectName}.
+                    </p>
+                    <p>To truly understand ${title}, we must first examine its foundations. Whether we are looking at the theoretical underpinnings or practical case studies, the significance of this topic cannot be overstated.</p>
+                    <h3>1. Historical Context and Origins</h3>
+                    <p>The origins of ${title} can be traced back to early discoveries where initial observations led to the formulation of basic laws. Over centuries, these concepts evolved. For instance, in the early days of ${subjectName}, understanding was limited by the technology of the time.</p>
+                    <h3>2. Core Principles and Mechanisms</h3>
+                    <p>At the heart of ${title} lie several immutable principles. These are the building blocks that allow us to predict outcomes, analyze data, and construct arguments.</p>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><strong>Fundamental Axiom A:</strong> The primary rule that governs the interaction between variables in this context.</li>
+                        <li><strong>Secondary Theorem B:</strong> A derivative concept that explains anomalies often found in experimental data.</li>
+                        <li><strong>The Principle of Continuity:</strong> Ensuring that our understanding holds true across different scales.</li>
+                    </ul>
+                    <h3>3. Summary and Key Takeaways</h3>
+                    <p>In conclusion, ${title} is more than just a chapter in a textbook. It is a lens through which we can view the world. We have covered its history, its core mechanics, its real-world applications, and the debates that keep it alive.</p>
+                </div>
+            `;
+        };
+
+        // --- Data Definition ---
+        
+        const subjectsList = [
+            { id: 'maths', title: 'Mathematics', icon: 'calculator', color: 'blue', desc: 'The language of numbers and logic.' },
+            { id: 'science', title: 'Science', icon: 'flask-conical', color: 'emerald', desc: 'Exploring the natural universe.' },
+            { id: 'history', title: 'History', icon: 'scroll-text', color: 'amber', desc: 'Understanding our past.' },
+            { id: 'geography', title: 'Geography', icon: 'globe', color: 'cyan', desc: 'The world and its people.' },
+            { id: 'religion', title: 'Religion', icon: 'church', color: 'purple', desc: 'Faiths and belief systems.' },
+            { id: 'english', title: 'English', icon: 'book-open', color: 'rose', desc: 'Language, literature, and communication.' }
+        ];
+
+        const subtopicLists = {
+            maths: ["Algebra I", "Linear Equations", "Quadratic Functions", "Polynomials", "Exponents", "Logarithms", "Plane Geometry", "Solid Geometry", "Trigonometry", "Unit Circle", "Calculus Limits", "Derivatives I", "Derivatives II", "Integrals", "Differential Eq", "Probability", "Statistics", "Standard Deviation", "Combinatorics", "Number Theory", "Complex Numbers", "Matrices", "Vector Algebra", "Set Theory", "Logic", "Game Theory", "Topology", "Chaos Theory", "Fractals", "Math History"],
+            science: ["Scientific Method", "Cell Biology", "Genetics", "Evolution", "Ecology", "Human Anatomy", "Plant Biology", "Microbiology", "Atomic Structure", "Periodic Table", "Chemical Bonding", "Stoichiometry", "Acids & Bases", "Organic Chem", "Thermodynamics", "Mechanics", "Kinematics", "Electromagnetism", "Optics", "Quantum Physics", "Relativity", "Solar System", "Stars", "Cosmology", "Geology", "Plate Tectonics", "Meteorology", "Oceanography", "Env Science", "Space History"],
+            history: ["Prehistory", "Mesopotamia", "Ancient Egypt", "Ancient Greece", "Roman Republic", "Roman Empire", "Byzantine Empire", "Middle Ages", "Vikings", "Crusades", "Renaissance", "Reformation", "Age of Exploration", "Enlightenment", "French Revolution", "Industrial Rev", "US Civil War", "Victorian Era", "WWI", "Interwar Period", "WWII Europe", "WWII Pacific", "Holocaust", "Cold War", "Decolonization", "Civil Rights", "Space Race", "Soviet Fall", "Modern Era", "Art History"],
+            geography: ["Physical Maps", "Political Maps", "Lat & Long", "Time Zones", "Earth Structure", "Volcanoes", "Mountains", "Rivers", "Oceans", "Atmosphere", "Climate Zones", "Rainforests", "Deserts", "Tundra", "Demographics", "Migration", "Urbanization", "Economics", "Agriculture", "Resources", "Globalization", "Culture", "Geopolitics", "North America", "South America", "Europe", "Africa", "Asia", "Oceania", "Antarctica"],
+            religion: ["Animism", "Egyptian Religion", "Greek Myth", "Norse Myth", "Hinduism Beliefs", "Hindu Deities", "Buddha", "Noble Truths", "Judaism History", "Torah", "Christianity", "Bible", "Catholicism", "Protestantism", "Islam Pillars", "Quran", "Sufism", "Sikhism", "Jainism", "Shinto", "Taoism", "Confucianism", "Zoroastrianism", "Baha'i", "New Age", "Atheism", "Ethics", "Religious Art", "Pilgrimages", "Comparative Religion"],
+            english: ["Nouns", "Verbs", "Adjectives", "Prepositions", "Conjunctions", "Sentences", "Punctuation", "Grammar Mistakes", "Vocabulary", "Etymology", "Creative Writing", "Essays", "Poetry", "Literary Devices", "Hero's Journey", "Hamlet", "Romeo & Juliet", "Victorian Lit", "American Classics", "Modernism", "Post-Colonial", "Dystopian", "Sci-Fi", "Fantasy", "Mystery", "Journalism", "Public Speaking", "Rhetoric", "Digital Literacy", "Tech Writing"]
+        };
+
+        const subjectsData = {};
+
+        subjectsList.forEach(sub => {
+            const topics = subtopicLists[sub.id].map((title, index) => ({
+                id: `${sub.id}_${index}`,
+                parentId: sub.id,
+                title: title,
+                description: `Comprehensive module covering ${title}.`,
+                content: generateLongContent(title, sub.title),
+                quiz: generateQuiz(title)
+            }));
+
+            subjectsData[sub.id] = { ...sub, lightColor: `bg-${sub.color}-50`, textColor: `text-${sub.color}-600`, bgColor: `bg-${sub.color}-500`, subtopics: topics };
+        });
+
+        // --- Application State & Logic ---
+
+        const app = {
+            state: {
+                view: 'home', // home, subject, lesson, library
+                currentSubjectId: null,
+                currentLessonId: null,
+                completedLessons: JSON.parse(localStorage.getItem('omni_completed')) || [],
+                earnedBadges: JSON.parse(localStorage.getItem('omni_badges')) || [],
+                quizState: 'intro', 
+                currentScore: 0,
+                searchQuery: ''
+            },
+
+            init() {
+                this.render();
+                lucide.createIcons();
+                this.renderBadgesList();
+            },
+
+            // --- Navigation ---
+            goHome() {
+                this.state.view = 'home';
+                this.state.quizState = 'intro';
+                this.state.searchQuery = '';
+                document.getElementById('global-search').value = '';
+                this.render();
+                window.scrollTo(0, 0);
+            },
+
+            goToLibrary() {
+                this.state.view = 'library';
+                this.render();
+                window.scrollTo(0, 0);
+            },
+
+            handleSearch(query) {
+                this.state.searchQuery = query.toLowerCase();
+                if (this.state.view !== 'library') {
+                    this.state.view = 'library';
+                }
+                this.render();
+            },
+
+            selectSubject(id) {
+                this.state.currentSubjectId = id;
+                this.state.view = 'subject';
+                this.render();
+                window.scrollTo(0, 0);
+            },
+
+            selectLesson(id, subjectId) {
+                // Determine subject ID if not provided (for search results)
+                if (!subjectId) {
+                    const parts = id.split('_');
+                    subjectId = parts[0];
+                }
+                this.state.currentSubjectId = subjectId;
+                this.state.currentLessonId = id;
+                this.state.view = 'lesson';
+                this.state.quizState = 'intro'; 
+                this.render();
+                window.scrollTo(0, 0);
+            },
+
+            toggleBadgeModal(show) {
+                const modal = document.getElementById('badge-modal');
+                if (show) {
+                    this.renderBadgesList();
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            },
+
+            // --- Logic: Completion & Badges ---
+            markComplete(id, fromQuiz = false) {
+                if (!this.state.completedLessons.includes(id)) {
+                    this.state.completedLessons.push(id);
+                    localStorage.setItem('omni_completed', JSON.stringify(this.state.completedLessons));
+                    
+                    if (!fromQuiz) this.showToast('Lesson Completed!', 'You earned +50 XP');
+                    
+                    this.checkBadges();
+                    this.render();
+                }
+            },
+
+            checkBadges() {
+                const completedCount = this.state.completedLessons.length;
+                const newBadges = [];
+
+                // Calculate total lessons dynamically
+                let totalLessons = 0;
+                Object.values(subjectsData).forEach(s => totalLessons += s.subtopics.length);
+
+                // Helper to count lessons per subject
+                const countPerSubject = (subjId) => {
+                    return this.state.completedLessons.filter(lId => lId.startsWith(subjId)).length;
+                };
+
+                // Badge Rules
+                if (completedCount >= 1 && !this.hasBadge('first_step')) newBadges.push('first_step');
+                if (completedCount >= 5 && !this.hasBadge('dedicated')) newBadges.push('dedicated');
+                if (completedCount >= 20 && !this.hasBadge('scholar')) newBadges.push('scholar');
+                if (completedCount >= 90 && !this.hasBadge('halfway_hero')) newBadges.push('halfway_hero');
+                if (completedCount >= totalLessons && !this.hasBadge('omniscient')) newBadges.push('omniscient');
+                
+                if (countPerSubject('maths') >= 3 && !this.hasBadge('math_novice')) newBadges.push('math_novice');
+                if (countPerSubject('science') >= 3 && !this.hasBadge('science_novice')) newBadges.push('science_novice');
+                if (countPerSubject('history') >= 3 && !this.hasBadge('history_novice')) newBadges.push('history_novice');
+
+                if (newBadges.length > 0) {
+                    this.state.earnedBadges = [...this.state.earnedBadges, ...newBadges];
+                    localStorage.setItem('omni_badges', JSON.stringify(this.state.earnedBadges));
+                    
+                    // Trigger animations for new badges
+                    newBadges.forEach(bId => {
+                        const badge = BADGES.find(b => b.id === bId);
+                        this.showToast('Badge Unlocked!', badge.title, badge.icon);
+                    });
+                }
+            },
+
+            hasBadge(id) {
+                return this.state.earnedBadges.includes(id);
+            },
+
+            // --- Logic: Quiz ---
+            startQuiz() {
+                this.state.quizState = 'active';
+                this.render(); 
+                setTimeout(() => document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' }), 100);
+            },
+
+            submitQuiz(form) {
+                const subject = subjectsData[this.state.currentSubjectId];
+                const lesson = subject.subtopics.find(t => t.id === this.state.currentLessonId);
+                let correct = 0;
+                
+                lesson.quiz.forEach((q, idx) => {
+                    const selected = form.querySelector(`input[name="q${idx}"]:checked`);
+                    if (selected && parseInt(selected.value) === q.correct) correct++;
+                });
+
+                this.state.currentScore = correct;
+                this.state.quizState = 'result';
+                
+                if (correct === lesson.quiz.length && !this.hasBadge('quiz_master')) {
+                    this.state.earnedBadges.push('quiz_master');
+                    localStorage.setItem('omni_badges', JSON.stringify(this.state.earnedBadges));
+                    this.showToast('Badge Unlocked!', 'Quiz Master', 'trophy');
+                }
+
+                if (correct >= 2) { // Pass threshold
+                    this.markComplete(lesson.id, true);
+                    this.showToast('Quiz Passed!', `You scored ${correct}/${lesson.quiz.length}`);
+                }
+
+                this.render();
+                setTimeout(() => document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' }), 100);
+            },
+
+            // --- UI Components ---
+
+            showToast(title, msg, iconName = 'check-circle') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'bg-white border-l-4 border-green-500 shadow-xl rounded-r-lg p-4 w-72 transform translate-x-full transition-all duration-300 flex items-start gap-3 pointer-events-auto';
+                
+                toast.innerHTML = `
+                    <div class="text-green-500 mt-0.5"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
+                        <p class="text-gray-500 text-xs mt-1">${msg}</p>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                lucide.createIcons();
+
+                requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            },
+
+            renderBadgesList() {
+                const container = document.getElementById('badge-list-container');
+                if(!container) return;
+                
+                container.innerHTML = BADGES.map(badge => {
+                    const earned = this.hasBadge(badge.id);
+                    return `
+                        <div class="flex items-center gap-4 p-4 rounded-xl border ${earned ? 'bg-white border-gray-100 shadow-sm' : 'bg-gray-100 border-transparent opacity-60'} mb-3">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center ${earned ? badge.color : 'bg-gray-200 text-gray-400'}">
+                                <i data-lucide="${badge.icon}" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 ${earned ? '' : 'text-gray-500'}">${badge.title}</h3>
+                                <p class="text-xs text-gray-500">${badge.desc}</p>
+                                ${earned ? '<span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full mt-1 inline-block">UNLOCKED</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            render() {
+                const root = document.getElementById('app-root');
+                root.innerHTML = '';
+                
+                if (this.state.view === 'home') root.appendChild(this.renderHome());
+                else if (this.state.view === 'subject') root.appendChild(this.renderSubject());
+                else if (this.state.view === 'lesson') root.appendChild(this.renderLesson());
+                else if (this.state.view === 'library') root.appendChild(this.renderLibrary());
+                
+                lucide.createIcons();
+            },
+
+            renderHome() {
+                const div = document.createElement('div');
+                div.className = 'fade-in';
+                
+                let html = `
+                    <div class="text-center mb-12">
+                        <h2 class="text-4xl font-extrabold text-gray-900 mb-4">What do you want to learn today?</h2>
+                        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Select a topic below to start your journey. Access over 180 detailed learning modules across 6 major disciplines.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                `;
+
+                Object.values(subjectsData).forEach(subject => {
+                    html += `
+                        <div onclick="app.selectSubject('${subject.id}')" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-6 cursor-pointer transition-all duration-300 transform hover:-translate-y-1">
+                            <div class="${subject.lightColor} ${subject.textColor} w-16 h-16 rounded-xl flex items-center justify-center mb-4 transition-colors group-hover:bg-opacity-80">
+                                <i data-lucide="${subject.icon}" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${subject.title}</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed mb-4">${subject.desc}</p>
+                            <div class="flex items-center text-sm font-medium text-gray-400 group-hover:text-gray-900 transition-colors">
+                                <span>${subject.subtopics.length} Modules</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-4 overflow-hidden">
+                                 <div class="${subject.bgColor}" style="width: ${this.getSubjectProgress(subject.id)}%; height: 100%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                div.innerHTML = html;
+                return div;
+            },
+
+            renderLibrary() {
+                const div = document.createElement('div');
+                div.className = 'fade-in';
+                const query = this.state.searchQuery;
+
+                // Flatten all topics for searching
+                let allTopics = [];
+                Object.values(subjectsData).forEach(subject => {
+                    subject.subtopics.forEach(topic => {
+                        allTopics.push({...topic, subjectName: subject.title, subjectIcon: subject.icon, subjectColor: subject.lightColor, subjectText: subject.textColor});
+                    });
+                });
+
+                if (query) {
+                    allTopics = allTopics.filter(t => 
+                        t.title.toLowerCase().includes(query) || 
+                        t.subjectName.toLowerCase().includes(query)
+                    );
+                }
+
+                let html = `
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">${query ? `Search Results: "${query}"` : 'Library Catalog'}</h2>
+                        <p class="text-gray-500">${allTopics.length} modules found.</p>
+                    </div>
+                `;
+
+                if (allTopics.length === 0) {
+                    html += `
+                        <div class="text-center py-20 bg-white rounded-2xl border border-gray-100">
+                            <i data-lucide="search-x" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold text-gray-900">No results found</h3>
+                            <p class="text-gray-500 mt-2">Try adjusting your search terms or browse by subject.</p>
+                            <button onclick="app.goHome()" class="mt-6 text-indigo-600 font-medium hover:underline">View All Subjects</button>
+                        </div>
+                    `;
+                } else {
+                    html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
+                    allTopics.forEach(topic => {
+                        const isCompleted = this.state.completedLessons.includes(topic.id);
+                        html += `
+                            <div onclick="app.selectLesson('${topic.id}', '${topic.parentId}')" class="bg-white p-5 rounded-xl border ${isCompleted ? 'border-green-200 bg-green-50/30' : 'border-gray-100'} hover:shadow-md cursor-pointer transition-all flex flex-col justify-between h-full">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="${topic.subjectColor} ${topic.subjectText} px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide">${topic.subjectName}</span>
+                                        ${isCompleted ? '<span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-xs font-bold"><i data-lucide="check" class="w-3 h-3 inline mr-1"></i>Done</span>' : ''}
+                                    </div>
+                                    <h4 class="font-bold text-gray-900 text-lg mb-2 leading-tight">${topic.title}</h4>
+                                    <p class="text-sm text-gray-500 line-clamp-2 mb-4">${topic.description}</p>
+                                </div>
+                                <div class="flex items-center text-sm font-medium text-indigo-600 mt-auto">
+                                    Start Learning <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+
+                div.innerHTML = html;
+                return div;
+            },
+
+            renderSubject() {
+                const subject = subjectsData[this.state.currentSubjectId];
+                const div = document.createElement('div');
+                div.className = 'fade-in';
+
+                let html = `
+                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                        <span class="cursor-pointer hover:text-indigo-600" onclick="app.goHome()">Home</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <span class="font-semibold text-gray-900">${subject.title}</span>
+                    </div>
+                    <div class="bg-white rounded-3xl p-8 mb-8 shadow-sm border border-gray-100 flex items-center justify-between overflow-hidden relative">
+                        <div class="relative z-10">
+                            <h2 class="text-3xl font-bold mb-2 text-gray-900">${subject.title}</h2>
+                            <p class="text-gray-600 max-w-lg">${subject.desc}</p>
+                            <p class="text-sm font-medium ${subject.textColor} mt-4">
+                                ${this.getSubjectProgress(subject.id)}% Complete
+                            </p>
+                        </div>
+                        <div class="${subject.lightColor} ${subject.textColor} p-6 rounded-2xl hidden md:block">
+                            <i data-lucide="${subject.icon}" class="w-12 h-12"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4 px-2 text-gray-800">Available Modules (${subject.subtopics.length})</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                `;
+
+                subject.subtopics.forEach(topic => {
+                    const isCompleted = this.state.completedLessons.includes(topic.id);
+                    html += `
+                        <div onclick="app.selectLesson('${topic.id}')" class="flex items-center justify-between p-5 bg-white border ${isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-100'} rounded-xl hover:shadow-md hover:border-gray-300 cursor-pointer transition-all group">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
+                                    <i data-lucide="${isCompleted ? 'check' : 'book-open'}" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold ${isCompleted ? 'text-green-800' : 'text-gray-800'} text-lg group-hover:text-indigo-600 transition-colors">${topic.title}</h4>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-gray-600"></i>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                div.innerHTML = html;
+                return div;
+            },
+
+            renderLesson() {
+                const subject = subjectsData[this.state.currentSubjectId];
+                const lesson = subject.subtopics.find(t => t.id === this.state.currentLessonId);
+                const isCompleted = this.state.completedLessons.includes(lesson.id);
+                const div = document.createElement('div');
+                div.className = 'fade-in';
+
+                // Quiz HTML Logic
+                let quizHtml = '';
+                if (this.state.quizState === 'intro') {
+                    quizHtml = `
+                        <div class="text-center py-8">
+                            <h3 class="text-2xl font-bold mb-4">Knowledge Check</h3>
+                            <p class="text-gray-600 mb-6">Take a quick 3-question quiz to test your understanding and complete this module.</p>
+                            <button onclick="app.startQuiz()" class="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2 mx-auto">
+                                <i data-lucide="play-circle" class="w-5 h-5"></i> Start Quiz
+                            </button>
+                        </div>
+                    `;
+                } else if (this.state.quizState === 'active') {
+                    quizHtml = `
+                        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                            <h3 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="help-circle" class="w-5 h-5 text-indigo-600"></i> Quiz: ${lesson.title}</h3>
+                            <form onsubmit="event.preventDefault(); app.submitQuiz(this)" class="space-y-8">
+                                ${lesson.quiz.map((q, i) => `
+                                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                        <p class="font-semibold text-gray-800 mb-4">${i+1}. ${q.question}</p>
+                                        <div class="space-y-2">
+                                            ${q.options.map((opt, optIdx) => `
+                                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                                                    <input type="radio" name="q${i}" value="${optIdx}" required class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                                                    <span class="text-gray-700 text-sm">${opt}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md">Submit Answers</button>
+                            </form>
+                        </div>
+                    `;
+                } else if (this.state.quizState === 'result') {
+                    const passed = this.state.currentScore >= 2;
+                    quizHtml = `
+                        <div class="text-center py-8 ${passed ? 'bg-green-50' : 'bg-red-50'} rounded-2xl border ${passed ? 'border-green-100' : 'border-red-100'}">
+                            <div class="w-16 h-16 rounded-full ${passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="${passed ? 'trophy' : 'x-circle'}" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold ${passed ? 'text-green-800' : 'text-red-800'} mb-2">
+                                ${passed ? 'Quiz Passed!' : 'Try Again'}
+                            </h3>
+                            <p class="text-gray-600 mb-6">You scored <span class="font-bold">${this.state.currentScore}/${lesson.quiz.length}</span></p>
+                            ${!passed ? `<button onclick="app.startQuiz()" class="text-indigo-600 font-bold hover:underline">Retake Quiz</button>` : ''}
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                        <span class="cursor-pointer hover:text-indigo-600" onclick="app.goHome()">Home</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <span class="cursor-pointer hover:text-indigo-600" onclick="app.selectSubject('${subject.id}')">${subject.title}</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <span class="font-semibold text-gray-900 truncate max-w-[200px]">${lesson.title}</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-12">
+                        <div class="${subject.bgColor} text-white p-8 sm:p-12 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-12 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                                <i data-lucide="${subject.icon}" class="w-64 h-64 text-white"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <button onclick="app.selectSubject('${subject.id}')" class="flex items-center gap-1 hover:bg-white/20 px-3 py-1 rounded-full transition-colors text-sm font-medium mb-6 w-fit">
+                                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to ${subject.title}
+                                </button>
+                                <h1 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">${lesson.title}</h1>
+                                <div class="flex items-center gap-4 text-white/80">
+                                    <span class="flex items-center gap-1 text-sm"><i data-lucide="clock" class="w-4 h-4"></i> 15 min read</span>
+                                    ${isCompleted ? '<span class="flex items-center gap-1 text-sm bg-white/20 px-2 py-0.5 rounded-full"><i data-lucide="check" class="w-3 h-3"></i> Completed</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-8 md:p-12 max-w-4xl mx-auto">
+                            <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 mb-12">
+                                ${lesson.content}
+                            </div>
+                            
+                            <div id="quiz-section" class="border-t border-gray-200 pt-12">
+                                ${quizHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return div;
+            },
+
+            getSubjectProgress(subjectId) {
+                const subject = subjectsData[subjectId];
+                if (!subject) return 0;
+                const total = subject.subtopics.length;
+                if (total === 0) return 0;
+                const completed = subject.subtopics.filter(t => this.state.completedLessons.includes(t.id)).length;
+                return Math.round((completed / total) * 100);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+    </script>
+</body>
+</html>
