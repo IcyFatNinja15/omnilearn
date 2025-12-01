@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniLearn - Comprehensive Learning Platform</title>
+    <title>OmniLearn - Secure Learning Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -14,13 +14,8 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .fade-in {
-            animation: fadeIn 0.4s ease-in-out;
-        }
-
-        .slide-in-right {
-            animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        .slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -33,53 +28,20 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #c7c7c7; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8; 
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        .prose p {
-            margin-bottom: 1.5em;
-            line-height: 1.8;
-            color: #374151;
-        }
-        
-        .prose h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #111827;
-            margin-top: 2em;
-            margin-bottom: 1em;
-        }
-
-        .prose ul {
-            list-style-type: disc;
-            padding-left: 1.5em;
-            margin-bottom: 1.5em;
-        }
-
-        .prose li {
-            margin-bottom: 0.5em;
-        }
-
-        /* Modal Styles */
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
+        .prose p { margin-bottom: 1.5em; line-height: 1.8; color: #374151; }
+        .prose h3 { font-size: 1.5rem; font-weight: 700; color: #111827; margin-top: 2em; margin-bottom: 1em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col relative">
 
-    <div id="toast-container" class="fixed top-24 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-24 right-4 z-[70] flex flex-col gap-2 pointer-events-none"></div>
 
     <div id="badge-modal" class="fixed inset-0 z-[60] hidden">
         <div class="modal-backdrop absolute inset-0 transition-opacity" onclick="app.toggleBadgeModal(false)"></div>
@@ -92,12 +54,11 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="badge-list-container">
-            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="badge-list-container"></div>
         </div>
     </div>
 
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40 hidden" id="main-header">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
             
             <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0" onclick="app.goHome()">
@@ -113,7 +74,7 @@
                 </div>
                 <input type="text" 
                        id="global-search"
-                       placeholder="Search lessons (e.g., 'Algebra', 'Roman Empire')..." 
+                       placeholder="Search lessons..." 
                        oninput="app.handleSearch(this.value)"
                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all">
             </div>
@@ -124,8 +85,8 @@
                 <button onclick="app.toggleBadgeModal(true)" class="hover:text-indigo-600 transition-colors">Achievements</button>
                 
                 <div class="flex items-center gap-3 cursor-pointer ml-2" onclick="app.toggleBadgeModal(true)">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md hover:ring-2 ring-offset-2 ring-indigo-500 transition-all">
-                        JS
+                    <div id="user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md hover:ring-2 ring-offset-2 ring-indigo-500 transition-all">
+                        US
                     </div>
                 </div>
             </nav>
@@ -161,12 +122,10 @@
             { id: 'omniscient', title: 'The Omniscient', icon: 'crown', desc: 'Complete ALL 180 lessons.', color: 'text-indigo-800 bg-yellow-300' }
         ];
 
-        // --- NEW: Helper to get Specific Math Examples based on Topic ---
+        // --- Math & Content Helpers ---
         const getMathExampleData = (title) => {
             const t = title.toLowerCase();
-
-            // Geometry
-            if (t.includes('geometry') || t.includes('circle') || t.includes('plane') || t.includes('solid')) {
+            if (t.includes('geometry') || t.includes('circle')) {
                 return {
                     concept: "Area Calculation",
                     desc: "In geometry, we often calculate the space inside a shape. For a rectangle, we multiply width by height.",
@@ -177,9 +136,7 @@
                     step2_math: "5 × 4 = 20",
                     result: "Area = 20 units²"
                 };
-            }
-            // Calculus / Derivatives
-            else if (t.includes('calculus') || t.includes('derivative') || t.includes('limits')) {
+            } else if (t.includes('calculus') || t.includes('derivative')) {
                 return {
                     concept: "Power Rule",
                     desc: "To find the derivative of a term like x^n, we multiply by the power and subtract 1 from the exponent.",
@@ -190,9 +147,7 @@
                     step2_math: "3 · x^(3-1)",
                     result: "f'(x) = 3x²"
                 };
-            }
-            // Statistics
-            else if (t.includes('statistics') || t.includes('probability') || t.includes('mean')) {
+            } else if (t.includes('statistics') || t.includes('mean')) {
                 return {
                     concept: "Calculating the Mean",
                     desc: "The mean is the average of a set of numbers. Add them up and divide by the count.",
@@ -203,9 +158,7 @@
                     step2_math: "15 / 3",
                     result: "Mean = 5"
                 };
-            }
-            // Trigonometry
-            else if (t.includes('trigonometry') || t.includes('triangle')) {
+            } else if (t.includes('trigonometry') || t.includes('triangle')) {
                 return {
                     concept: "Pythagorean Theorem",
                     desc: "In a right triangle, a² + b² = c².",
@@ -216,9 +169,7 @@
                     step2_math: "√25",
                     result: "c = 5"
                 };
-            }
-            // Default Algebra (Linear Equations)
-            else {
+            } else {
                 return {
                     concept: "The Balance Method",
                     desc: "An equation is like a scale. To keep it balanced, operations must be applied equally to both sides.",
@@ -232,39 +183,7 @@
             }
         };
 
-        // --- NEW: Helper to get Specific Quizzes based on Topic ---
-        const topicQuizzes = {
-            // Examples of manually defined specific quizzes
-            "Scientific Method": [
-                { question: "What is the first step of the Scientific Method?", options: ["Conclusion", "Observation", "Experiment", "Publication"], correct: 1 },
-                { question: "A prediction that can be tested is called a:", options: ["Theory", "Fact", "Hypothesis", "Law"], correct: 2 },
-                { question: "Data measured in numbers is:", options: ["Qualitative", "Quantitative", "Subjective", "Abstract"], correct: 1 }
-            ],
-            "Cell Biology": [
-                { question: "What is the 'powerhouse' of the cell?", options: ["Nucleus", "Mitochondria", "Ribosome", "Membrane"], correct: 1 },
-                { question: "Which organelle contains DNA?", options: ["Nucleus", "Golgi", "Lysosome", "Wall"], correct: 0 },
-                { question: "Plant cells differ from animal cells because they have:", options: ["A Nucleus", "Chloroplasts", "Mitochondria", "DNA"], correct: 1 }
-            ],
-            "Algebra I": [
-                { question: "Solve for x: x + 5 = 10", options: ["2", "5", "10", "15"], correct: 1 },
-                { question: "What represents an unknown value?", options: ["Constant", "Variable", "Coefficient", "Operator"], correct: 1 },
-                { question: "Which is an algebraic expression?", options: ["5", "x + 2", "equals", "7"], correct: 1 }
-            ],
-            "Ancient Egypt": [
-                { question: "Which river was vital to Ancient Egypt?", options: ["Amazon", "Nile", "Tigris", "Danube"], correct: 1 },
-                { question: "Egyptian writing is called:", options: ["Cuneiform", "Hieroglyphics", "Latin", "Sanskrit"], correct: 1 },
-                { question: "Who was the ruler of Egypt?", options: ["President", "King", "Pharaoh", "Emperor"], correct: 2 }
-            ]
-        };
-
         const generateQuiz = (topicTitle, subjectId) => {
-            // 1. Check if we have a manually written quiz for this exact topic
-            if (topicQuizzes[topicTitle]) {
-                return topicQuizzes[topicTitle];
-            }
-
-            // 2. If not, generate a "Smart" generic quiz that uses the topic title to feel specific
-            // MATH FALLBACK
             if (subjectId === 'maths') {
                 return [
                     { question: `Which concept is central to ${topicTitle}?`, options: ["Spelling", "Logic and Number Relationships", "Photosynthesis", "Historical Dates"], correct: 1 },
@@ -272,7 +191,6 @@
                     { question: "Which tool is most useful here?", options: ["Microscope", "Calculator/Formula", "Map", "Telescope"], correct: 1 }
                 ];
             }
-            // SCIENCE FALLBACK
             if (subjectId === 'science') {
                 return [
                     { question: `What is the primary method of study in ${topicTitle}?`, options: ["Observation and Experimentation", "Reading Fiction", "Debate", "Guessing"], correct: 0 },
@@ -280,7 +198,6 @@
                     { question: "Which of these is a key factor in this field?", options: ["Evidence", "Magic", "Opinion", "Rumor"], correct: 0 }
                 ];
             }
-            // HISTORY FALLBACK
             if (subjectId === 'history') {
                 return [
                     { question: `Which era does ${topicTitle} belong to?`, options: ["The Future", "The Past", "Current Events", "Fiction"], correct: 1 },
@@ -288,7 +205,6 @@
                     { question: `Why do we study ${topicTitle}?`, options: ["To memorize useless dates", "To understand context and human behavior", "To predict stock prices", "For math practice"], correct: 1 }
                 ];
             }
-            // GENERIC FALLBACK (English, Geo, Religion, etc)
             return [
                 { question: `What is the main focus of ${topicTitle}?`, options: ["Random facts", `The core principles of ${topicTitle}`, "Cooking", "Sports"], correct: 1 },
                 { question: "True or False: This topic requires critical thinking.", options: ["True", "False"], correct: 0 },
@@ -296,100 +212,52 @@
             ];
         };
 
-        // --- Content Generator with Math Examples ---
         const generateSpecificContent = (topicId, title, subjectName) => {
-            // Check if the topic belongs to Maths
             if (topicId.startsWith('maths')) {
-                // Get the specific example data for this math topic
                 const data = getMathExampleData(title);
-
                 return `
                     <div class="space-y-8">
-                        <p class="text-xl font-medium text-gray-800 leading-relaxed">
-                            Mastering <strong>${title}</strong> is essential for advanced problem solving. 
-                            This module breaks down the variables, constants, and the logic required to solve complex problems.
-                        </p>
-                        
+                        <p class="text-xl font-medium text-gray-800 leading-relaxed">Mastering <strong>${title}</strong> is essential for advanced problem solving. This module breaks down the variables, constants, and the logic required.</p>
                         <h3>1. Understanding the Core Concept: ${data.concept}</h3>
                         <p>${data.desc}</p>
-
-                        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm">
-                            <h4 class="font-bold text-blue-900 mb-2 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> Key Rule</h4>
-                            <p class="text-blue-800">Always ensure you identify your variables before applying the formula.</p>
-                        </div>
-
-                        <h3>2. Example Question: ${data.concept}</h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm"><h4 class="font-bold text-blue-900 mb-2">Key Rule</h4><p class="text-blue-800">Always ensure you identify your variables before applying the formula.</p></div>
+                        <h3>2. Example Question</h3>
                         <p><strong>Problem:</strong> ${data.problem}</p>
-                        
-                        <div class="text-2xl md:text-3xl font-mono bg-white text-indigo-700 p-8 rounded-xl mb-6 text-center shadow-md border border-gray-200">
-                            ${data.problem.split('.')[0]}
-                        </div>
-
+                        <div class="text-2xl md:text-3xl font-mono bg-white text-indigo-700 p-8 rounded-xl mb-6 text-center shadow-md border border-gray-200">${data.problem.split('.')[0]}</div>
                         <h4 class="font-bold text-gray-900 mb-4">Step-by-Step Solution:</h4>
                         <div class="space-y-4">
-                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                                <span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Step 1</span>
-                                <div>
-                                    <p class="font-bold text-gray-900">${data.step1}</p>
-                                    <code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step1_math}</code>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                                <span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Step 2</span>
-                                <div>
-                                    <p class="font-bold text-gray-900">${data.step2}</p>
-                                    <code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step2_math}</code>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm">
-                                <span class="bg-green-200 text-green-800 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase tracking-wide">Result</span>
-                                <div>
-                                    <p class="font-bold text-xl text-green-800 font-mono">${data.result}</p>
-                                </div>
-                            </div>
+                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm"><span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase">Step 1</span><div><p class="font-bold text-gray-900">${data.step1}</p><code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step1_math}</code></div></div>
+                            <div class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm"><span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase">Step 2</span><div><p class="font-bold text-gray-900">${data.step2}</p><code class="block mt-2 bg-gray-50 border border-gray-200 p-2 rounded text-sm text-gray-700 font-mono">${data.step2_math}</code></div></div>
+                            <div class="flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm"><span class="bg-green-200 text-green-800 font-bold px-3 py-1 rounded-full text-xs mt-1 uppercase">Result</span><div><p class="font-bold text-xl text-green-800 font-mono">${data.result}</p></div></div>
                         </div>
-
                         <h3>3. Advanced Application</h3>
-                        <p>When dealing with higher-order terms, such as in <strong>Quadratic Functions</strong>, we often employ specific formulas. The logic remains the same: simplify, isolate, and solve.</p>
-                        
+                        <p>When dealing with higher-order terms, such as in <strong>Quadratic Functions</strong>, we often employ specific formulas.</p>
                         <div class="my-6 p-4 border rounded-lg bg-gray-50 text-center text-sm text-gray-500 italic">
                              
 
 [Image of quadratic formula]
 
                         </div>
-
-                        <p>In conclusion, whether you are solving for simple integers or complex roots, the fundamental principles of algebra apply.</p>
                     </div>
                 `;
             }
-
-            // Fallback for non-math subjects
             return `
                 <div class="space-y-6">
-                    <p class="text-xl font-medium text-gray-800 leading-relaxed">
-                        Welcome to the comprehensive module on <strong>${title}</strong>. This section serves as a deep dive into the core principles, historical context, and modern applications of this critical topic within the field of ${subjectName}.
-                    </p>
-                    <p>To truly understand ${title}, we must first examine its foundations. Whether we are looking at the theoretical underpinnings or practical case studies, the significance of this topic cannot be overstated.</p>
-                    <h3>1. Historical Context and Origins</h3>
-                    <p>The origins of ${title} can be traced back to early discoveries where initial observations led to the formulation of basic laws. Over centuries, these concepts evolved. For instance, in the early days of ${subjectName}, understanding was limited by the technology of the time.</p>
-                    <h3>2. Core Principles and Mechanisms</h3>
-                    <p>At the heart of ${title} lie several immutable principles. These are the building blocks that allow us to predict outcomes, analyze data, and construct arguments.</p>
+                    <p class="text-xl font-medium text-gray-800 leading-relaxed">Welcome to the comprehensive module on <strong>${title}</strong>. This section serves as a deep dive into the core principles of ${subjectName}.</p>
+                    <h3>1. Historical Context</h3>
+                    <p>The origins of ${title} can be traced back to early discoveries where initial observations led to the formulation of basic laws.</p>
+                    <h3>2. Core Principles</h3>
                     <ul class="list-disc pl-5 space-y-2 text-gray-700">
-                        <li><strong>Fundamental Axiom A:</strong> The primary rule that governs the interaction between variables in this context.</li>
-                        <li><strong>Secondary Theorem B:</strong> A derivative concept that explains anomalies often found in experimental data.</li>
-                        <li><strong>The Principle of Continuity:</strong> Ensuring that our understanding holds true across different scales.</li>
+                        <li><strong>Fundamental Axiom A:</strong> The primary rule that governs the interaction between variables.</li>
+                        <li><strong>Secondary Theorem B:</strong> A derivative concept that explains anomalies.</li>
                     </ul>
-                    <h3>3. Summary and Key Takeaways</h3>
-                    <p>In conclusion, ${title} is more than just a chapter in a textbook. It is a lens through which we can view the world. We have covered its history, its core mechanics, its real-world applications, and the debates that keep it alive.</p>
+                    <h3>3. Summary</h3>
+                    <p>In conclusion, ${title} is more than just a chapter in a textbook. It is a lens through which we can view the world.</p>
                 </div>
             `;
         };
 
-        // --- Data Definition ---
-        
+        // --- Data Population ---
         const subjectsList = [
             { id: 'maths', title: 'Mathematics', icon: 'calculator', color: 'blue', desc: 'The language of numbers and logic.' },
             { id: 'science', title: 'Science', icon: 'flask-conical', color: 'emerald', desc: 'Exploring the natural universe.' },
@@ -409,8 +277,6 @@
         };
 
         const subjectsData = {};
-
-        // Loop to generate content
         subjectsList.forEach(sub => {
             const topics = subtopicLists[sub.id].map((title, index) => {
                 const topicId = `${sub.id}_${index}`;
@@ -419,21 +285,22 @@
                     parentId: sub.id,
                     title: title,
                     description: `Comprehensive module covering ${title}.`,
-                    // Use updated content generator
                     content: generateSpecificContent(topicId, title, sub.title),
-                    // Use updated quiz generator
                     quiz: generateQuiz(title, sub.id)
                 };
             });
-
             subjectsData[sub.id] = { ...sub, lightColor: `bg-${sub.color}-50`, textColor: `text-${sub.color}-600`, bgColor: `bg-${sub.color}-500`, subtopics: topics };
         });
 
-        // --- Application State & Logic ---
-
+        // --- Application Logic ---
         const app = {
             state: {
-                view: 'home', // home, subject, lesson, library
+                view: 'auth', // 'auth', 'home', 'subject', 'lesson', 'library'
+                authStep: 'entry', // 'entry' or 'verify'
+                authMode: 'login', // 'login' or 'signup'
+                verificationCode: null, // Stores the generated code
+                tempEmail: null, // Stores email during verification
+                currentUser: null,
                 currentSubjectId: null,
                 currentLessonId: null,
                 completedLessons: JSON.parse(localStorage.getItem('omni_completed')) || [],
@@ -449,42 +316,34 @@
                 this.renderBadgesList();
             },
 
-            // --- Navigation ---
+            // Navigation
             goHome() {
                 this.state.view = 'home';
                 this.state.quizState = 'intro';
                 this.state.searchQuery = '';
-                document.getElementById('global-search').value = '';
+                const searchInput = document.getElementById('global-search');
+                if(searchInput) searchInput.value = '';
                 this.render();
                 window.scrollTo(0, 0);
             },
-
             goToLibrary() {
                 this.state.view = 'library';
                 this.render();
                 window.scrollTo(0, 0);
             },
-
             handleSearch(query) {
                 this.state.searchQuery = query.toLowerCase();
-                if (this.state.view !== 'library') {
-                    this.state.view = 'library';
-                }
+                if (this.state.view !== 'library') this.state.view = 'library';
                 this.render();
             },
-
             selectSubject(id) {
                 this.state.currentSubjectId = id;
                 this.state.view = 'subject';
                 this.render();
                 window.scrollTo(0, 0);
             },
-
             selectLesson(id, subjectId) {
-                if (!subjectId) {
-                    const parts = id.split('_');
-                    subjectId = parts[0];
-                }
+                if (!subjectId) subjectId = id.split('_')[0];
                 this.state.currentSubjectId = subjectId;
                 this.state.currentLessonId = id;
                 this.state.view = 'lesson';
@@ -492,7 +351,6 @@
                 this.render();
                 window.scrollTo(0, 0);
             },
-
             toggleBadgeModal(show) {
                 const modal = document.getElementById('badge-modal');
                 if (show) {
@@ -503,36 +361,72 @@
                 }
             },
 
-            // --- Logic: Completion & Badges ---
+            // --- Authentication Logic ---
+            setAuthMode(mode) {
+                this.state.authMode = mode;
+                this.render();
+            },
+
+            handleAuthEntry(form) {
+                const email = form.querySelector('input[type="email"]').value;
+                this.state.tempEmail = email;
+                
+                // 1. Generate Random Code (Simulation)
+                this.state.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                // 2. "Send" Code (Show in Toast for Demo)
+                this.showToast('Verification Code Sent', `Your code is: ${this.state.verificationCode}`, 'mail');
+                
+                // 3. Move to Verify Step
+                this.state.authStep = 'verify';
+                this.render();
+            },
+
+            handleVerification(form) {
+                const codeInput = form.querySelector('input[name="code"]').value;
+                
+                if (codeInput === this.state.verificationCode) {
+                    // Success
+                    this.state.currentUser = { email: this.state.tempEmail, initials: this.state.tempEmail.substring(0, 2).toUpperCase() };
+                    document.getElementById('user-avatar').innerText = this.state.currentUser.initials;
+                    this.state.view = 'home';
+                    this.state.authStep = 'entry'; // Reset for next time
+                    this.render();
+                    this.showToast('Welcome!', 'Authentication successful');
+                } else {
+                    // Fail
+                    this.showToast('Error', 'Invalid verification code', 'alert-circle');
+                    form.querySelector('input[name="code"]').classList.add('border-red-500');
+                }
+            },
+
+            resetAuth() {
+                this.state.authStep = 'entry';
+                this.render();
+            },
+
+            // Logic
             markComplete(id, fromQuiz = false) {
                 if (!this.state.completedLessons.includes(id)) {
                     this.state.completedLessons.push(id);
                     localStorage.setItem('omni_completed', JSON.stringify(this.state.completedLessons));
-                    
                     if (!fromQuiz) this.showToast('Lesson Completed!', 'You earned +50 XP');
-                    
                     this.checkBadges();
                     this.render();
                 }
             },
-
             checkBadges() {
                 const completedCount = this.state.completedLessons.length;
                 const newBadges = [];
-
                 let totalLessons = 0;
                 Object.values(subjectsData).forEach(s => totalLessons += s.subtopics.length);
-
-                const countPerSubject = (subjId) => {
-                    return this.state.completedLessons.filter(lId => lId.startsWith(subjId)).length;
-                };
+                const countPerSubject = (subjId) => this.state.completedLessons.filter(lId => lId.startsWith(subjId)).length;
 
                 if (completedCount >= 1 && !this.hasBadge('first_step')) newBadges.push('first_step');
                 if (completedCount >= 5 && !this.hasBadge('dedicated')) newBadges.push('dedicated');
                 if (completedCount >= 20 && !this.hasBadge('scholar')) newBadges.push('scholar');
                 if (completedCount >= 90 && !this.hasBadge('halfway_hero')) newBadges.push('halfway_hero');
                 if (completedCount >= totalLessons && !this.hasBadge('omniscient')) newBadges.push('omniscient');
-                
                 if (countPerSubject('maths') >= 3 && !this.hasBadge('math_novice')) newBadges.push('math_novice');
                 if (countPerSubject('science') >= 3 && !this.hasBadge('science_novice')) newBadges.push('science_novice');
                 if (countPerSubject('history') >= 3 && !this.hasBadge('history_novice')) newBadges.push('history_novice');
@@ -540,83 +434,61 @@
                 if (newBadges.length > 0) {
                     this.state.earnedBadges = [...this.state.earnedBadges, ...newBadges];
                     localStorage.setItem('omni_badges', JSON.stringify(this.state.earnedBadges));
-                    
                     newBadges.forEach(bId => {
                         const badge = BADGES.find(b => b.id === bId);
                         this.showToast('Badge Unlocked!', badge.title, badge.icon);
                     });
                 }
             },
-
-            hasBadge(id) {
-                return this.state.earnedBadges.includes(id);
-            },
-
-            // --- Logic: Quiz ---
+            hasBadge(id) { return this.state.earnedBadges.includes(id); },
             startQuiz() {
                 this.state.quizState = 'active';
                 this.render(); 
                 setTimeout(() => document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' }), 100);
             },
-
             submitQuiz(form) {
                 const subject = subjectsData[this.state.currentSubjectId];
                 const lesson = subject.subtopics.find(t => t.id === this.state.currentLessonId);
                 let correct = 0;
-                
                 lesson.quiz.forEach((q, idx) => {
                     const selected = form.querySelector(`input[name="q${idx}"]:checked`);
                     if (selected && parseInt(selected.value) === q.correct) correct++;
                 });
-
                 this.state.currentScore = correct;
                 this.state.quizState = 'result';
-                
                 if (correct === lesson.quiz.length && !this.hasBadge('quiz_master')) {
                     this.state.earnedBadges.push('quiz_master');
                     localStorage.setItem('omni_badges', JSON.stringify(this.state.earnedBadges));
                     this.showToast('Badge Unlocked!', 'Quiz Master', 'trophy');
                 }
-
                 if (correct >= 2) { 
                     this.markComplete(lesson.id, true);
                     this.showToast('Quiz Passed!', `You scored ${correct}/${lesson.quiz.length}`);
                 }
-
                 this.render();
                 setTimeout(() => document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' }), 100);
             },
 
-            // --- UI Components ---
-
+            // UI
             showToast(title, msg, iconName = 'check-circle') {
                 const container = document.getElementById('toast-container');
                 const toast = document.createElement('div');
                 toast.className = 'bg-white border-l-4 border-green-500 shadow-xl rounded-r-lg p-4 w-72 transform translate-x-full transition-all duration-300 flex items-start gap-3 pointer-events-auto';
-                
                 toast.innerHTML = `
                     <div class="text-green-500 mt-0.5"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>
-                    <div>
-                        <h4 class="font-bold text-gray-800 text-sm">${title}</h4>
-                        <p class="text-gray-500 text-xs mt-1">${msg}</p>
-                    </div>
+                    <div><h4 class="font-bold text-gray-800 text-sm">${title}</h4><p class="text-gray-500 text-xs mt-1">${msg}</p></div>
                 `;
-                
                 container.appendChild(toast);
                 lucide.createIcons();
-
                 requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-
                 setTimeout(() => {
                     toast.classList.add('translate-x-full', 'opacity-0');
                     setTimeout(() => toast.remove(), 300);
-                }, 4000);
+                }, 5000); // Increased duration to see code
             },
-
             renderBadgesList() {
                 const container = document.getElementById('badge-list-container');
                 if(!container) return;
-                
                 container.innerHTML = BADGES.map(badge => {
                     const earned = this.hasBadge(badge.id);
                     return `
@@ -635,30 +507,110 @@
                 lucide.createIcons();
             },
 
+            // Render Views
             render() {
                 const root = document.getElementById('app-root');
-                root.innerHTML = '';
+                const header = document.getElementById('main-header');
                 
-                if (this.state.view === 'home') root.appendChild(this.renderHome());
+                // Toggle Header
+                if (this.state.view === 'auth') header.classList.add('hidden');
+                else header.classList.remove('hidden');
+
+                root.innerHTML = '';
+                if (this.state.view === 'auth') {
+                    if (this.state.authStep === 'entry') root.appendChild(this.renderAuthEntry());
+                    else root.appendChild(this.renderVerification());
+                }
+                else if (this.state.view === 'home') root.appendChild(this.renderHome());
                 else if (this.state.view === 'subject') root.appendChild(this.renderSubject());
                 else if (this.state.view === 'lesson') root.appendChild(this.renderLesson());
                 else if (this.state.view === 'library') root.appendChild(this.renderLibrary());
-                
                 lucide.createIcons();
+            },
+
+            // 1. Initial Auth Screen (Log in / Sign up)
+            renderAuthEntry() {
+                const div = document.createElement('div');
+                div.className = 'min-h-[80vh] flex items-center justify-center fade-in px-4';
+                const isLogin = this.state.authMode === 'login';
+                
+                div.innerHTML = `
+                    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                        <div class="grid grid-cols-2 text-center text-sm font-bold border-b border-gray-100">
+                            <button onclick="app.setAuthMode('login')" class="p-4 ${isLogin ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50' : 'text-gray-500 hover:bg-gray-50'}">Log In</button>
+                            <button onclick="app.setAuthMode('signup')" class="p-4 ${!isLogin ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50' : 'text-gray-500 hover:bg-gray-50'}">Sign Up</button>
+                        </div>
+                        <div class="p-8">
+                            <div class="text-center mb-6">
+                                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                    <i data-lucide="${isLogin ? 'log-in' : 'user-plus'}" class="w-6 h-6"></i>
+                                </div>
+                                <h1 class="text-2xl font-bold text-gray-900">${isLogin ? 'Welcome Back' : 'Create Account'}</h1>
+                                <p class="text-gray-500 text-sm mt-1">${isLogin ? 'Enter your details to access your account' : 'Start your learning journey today'}</p>
+                            </div>
+                            <form onsubmit="event.preventDefault(); app.handleAuthEntry(this)" class="space-y-5">
+                                ${!isLogin ? `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input type="text" required placeholder="Enter your name" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>` : ''}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" required placeholder="name@example.com" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <input type="password" required placeholder="••••••••" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-transform active:scale-95 shadow-md flex items-center justify-center gap-2">
+                                    ${isLogin ? 'Log In' : 'Sign Up'} <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                return div;
+            },
+
+            // 2. Verification Screen (Enter Code)
+            renderVerification() {
+                const div = document.createElement('div');
+                div.className = 'min-h-[80vh] flex items-center justify-center fade-in px-4';
+                div.innerHTML = `
+                    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8">
+                        <button onclick="app.resetAuth()" class="text-gray-400 hover:text-gray-600 mb-4 flex items-center gap-1 text-sm"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+                        <div class="text-center mb-6">
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <i data-lucide="shield-check" class="w-6 h-6"></i>
+                            </div>
+                            <h1 class="text-2xl font-bold text-gray-900">Verify it's you</h1>
+                            <p class="text-gray-500 text-sm mt-1">We sent a verification code to <span class="font-bold text-gray-800">${this.state.tempEmail}</span></p>
+                            <p class="text-xs text-indigo-600 mt-2 bg-indigo-50 inline-block px-2 py-1 rounded">Check the notification popup!</p>
+                        </div>
+                        <form onsubmit="event.preventDefault(); app.handleVerification(this)" class="space-y-6">
+                            <div>
+                                <input type="text" name="code" required placeholder="123456" maxlength="6" class="block w-full text-center text-3xl tracking-widest px-3 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all font-mono">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-transform active:scale-95 shadow-md">
+                                Verify & Enter
+                            </button>
+                            <p class="text-center text-xs text-gray-400">Didn't receive code? <button type="button" onclick="app.handleAuthEntry({querySelector: (s)=>({value: app.state.tempEmail})})" class="text-indigo-600 hover:underline">Resend</button></p>
+                        </form>
+                    </div>
+                `;
+                return div;
             },
 
             renderHome() {
                 const div = document.createElement('div');
                 div.className = 'fade-in';
-                
                 let html = `
                     <div class="text-center mb-12">
                         <h2 class="text-4xl font-extrabold text-gray-900 mb-4">What do you want to learn today?</h2>
-                        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Select a topic below to start your journey. Access over 180 detailed learning modules across 6 major disciplines.</p>
+                        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Select a topic below to start your journey. Access over 180 detailed learning modules.</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 `;
-
                 Object.values(subjectsData).forEach(subject => {
                     html += `
                         <div onclick="app.selectSubject('${subject.id}')" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-6 cursor-pointer transition-all duration-300 transform hover:-translate-y-1">
@@ -686,35 +638,21 @@
                 const div = document.createElement('div');
                 div.className = 'fade-in';
                 const query = this.state.searchQuery;
-
-                // Flatten all topics for searching
                 let allTopics = [];
                 Object.values(subjectsData).forEach(subject => {
                     subject.subtopics.forEach(topic => {
                         allTopics.push({...topic, subjectName: subject.title, subjectIcon: subject.icon, subjectColor: subject.lightColor, subjectText: subject.textColor});
                     });
                 });
-
                 if (query) {
-                    allTopics = allTopics.filter(t => 
-                        t.title.toLowerCase().includes(query) || 
-                        t.subjectName.toLowerCase().includes(query)
-                    );
+                    allTopics = allTopics.filter(t => t.title.toLowerCase().includes(query) || t.subjectName.toLowerCase().includes(query));
                 }
-
-                let html = `
-                    <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-gray-900 mb-2">${query ? `Search Results: "${query}"` : 'Library Catalog'}</h2>
-                        <p class="text-gray-500">${allTopics.length} modules found.</p>
-                    </div>
-                `;
-
+                let html = `<div class="mb-8"><h2 class="text-3xl font-bold text-gray-900 mb-2">${query ? `Search Results: "${query}"` : 'Library Catalog'}</h2><p class="text-gray-500">${allTopics.length} modules found.</p></div>`;
                 if (allTopics.length === 0) {
                     html += `
                         <div class="text-center py-20 bg-white rounded-2xl border border-gray-100">
                             <i data-lucide="search-x" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
                             <h3 class="text-xl font-bold text-gray-900">No results found</h3>
-                            <p class="text-gray-500 mt-2">Try adjusting your search terms or browse by subject.</p>
                             <button onclick="app.goHome()" class="mt-6 text-indigo-600 font-medium hover:underline">View All Subjects</button>
                         </div>
                     `;
@@ -732,15 +670,12 @@
                                     <h4 class="font-bold text-gray-900 text-lg mb-2 leading-tight">${topic.title}</h4>
                                     <p class="text-sm text-gray-500 line-clamp-2 mb-4">${topic.description}</p>
                                 </div>
-                                <div class="flex items-center text-sm font-medium text-indigo-600 mt-auto">
-                                    Start Learning <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
-                                </div>
+                                <div class="flex items-center text-sm font-medium text-indigo-600 mt-auto">Start Learning <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
                             </div>
                         `;
                     });
                     html += `</div>`;
                 }
-
                 div.innerHTML = html;
                 return div;
             },
@@ -749,7 +684,6 @@
                 const subject = subjectsData[this.state.currentSubjectId];
                 const div = document.createElement('div');
                 div.className = 'fade-in';
-
                 let html = `
                     <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
                         <span class="cursor-pointer hover:text-indigo-600" onclick="app.goHome()">Home</span>
@@ -760,9 +694,7 @@
                         <div class="relative z-10">
                             <h2 class="text-3xl font-bold mb-2 text-gray-900">${subject.title}</h2>
                             <p class="text-gray-600 max-w-lg">${subject.desc}</p>
-                            <p class="text-sm font-medium ${subject.textColor} mt-4">
-                                ${this.getSubjectProgress(subject.id)}% Complete
-                            </p>
+                            <p class="text-sm font-medium ${subject.textColor} mt-4">${this.getSubjectProgress(subject.id)}% Complete</p>
                         </div>
                         <div class="${subject.lightColor} ${subject.textColor} p-6 rounded-2xl hidden md:block">
                             <i data-lucide="${subject.icon}" class="w-12 h-12"></i>
@@ -771,24 +703,20 @@
                     <h3 class="text-xl font-bold mb-4 px-2 text-gray-800">Available Modules (${subject.subtopics.length})</h3>
                     <div class="grid grid-cols-1 gap-3">
                 `;
-
                 subject.subtopics.forEach(topic => {
                     const isCompleted = this.state.completedLessons.includes(topic.id);
                     html += `
-                        <div onclick="app.selectLesson('${topic.id}')" class="flex items-center justify-between p-5 bg-white border ${isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-100'} rounded-xl hover:shadow-md hover:border-gray-300 cursor-pointer transition-all group">
+                        <div onclick="app.selectLesson('${topic.id}')" class="flex items-center justify-between p-5 bg-white border ${isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-100'} rounded-xl hover:shadow-md cursor-pointer transition-all group">
                             <div class="flex items-center gap-4">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
                                     <i data-lucide="${isCompleted ? 'check' : 'book-open'}" class="w-4 h-4"></i>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold ${isCompleted ? 'text-green-800' : 'text-gray-800'} text-lg group-hover:text-indigo-600 transition-colors">${topic.title}</h4>
-                                </div>
+                                <h4 class="font-bold ${isCompleted ? 'text-green-800' : 'text-gray-800'} text-lg group-hover:text-indigo-600 transition-colors">${topic.title}</h4>
                             </div>
                             <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-gray-600"></i>
                         </div>
                     `;
                 });
-                
                 html += '</div>';
                 div.innerHTML = html;
                 return div;
@@ -801,13 +729,12 @@
                 const div = document.createElement('div');
                 div.className = 'fade-in';
 
-                // Quiz HTML Logic
                 let quizHtml = '';
                 if (this.state.quizState === 'intro') {
                     quizHtml = `
                         <div class="text-center py-8">
                             <h3 class="text-2xl font-bold mb-4">Knowledge Check</h3>
-                            <p class="text-gray-600 mb-6">Take a quick 3-question quiz to test your understanding and complete this module.</p>
+                            <p class="text-gray-600 mb-6">Take a quick quiz to complete this module.</p>
                             <button onclick="app.startQuiz()" class="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2 mx-auto">
                                 <i data-lucide="play-circle" class="w-5 h-5"></i> Start Quiz
                             </button>
@@ -824,14 +751,14 @@
                                         <div class="space-y-2">
                                             ${q.options.map((opt, optIdx) => `
                                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                                                    <input type="radio" name="q${i}" value="${optIdx}" required class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                                                    <input type="radio" name="q${i}" value="${optIdx}" required class="w-4 h-4 text-indigo-600">
                                                     <span class="text-gray-700 text-sm">${opt}</span>
                                                 </label>
                                             `).join('')}
                                         </div>
                                     </div>
                                 `).join('')}
-                                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-md">Submit Answers</button>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-md">Submit Answers</button>
                             </form>
                         </div>
                     `;
@@ -842,9 +769,7 @@
                             <div class="w-16 h-16 rounded-full ${passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} flex items-center justify-center mx-auto mb-4">
                                 <i data-lucide="${passed ? 'trophy' : 'x-circle'}" class="w-8 h-8"></i>
                             </div>
-                            <h3 class="text-2xl font-bold ${passed ? 'text-green-800' : 'text-red-800'} mb-2">
-                                ${passed ? 'Quiz Passed!' : 'Try Again'}
-                            </h3>
+                            <h3 class="text-2xl font-bold ${passed ? 'text-green-800' : 'text-red-800'} mb-2">${passed ? 'Quiz Passed!' : 'Try Again'}</h3>
                             <p class="text-gray-600 mb-6">You scored <span class="font-bold">${this.state.currentScore}/${lesson.quiz.length}</span></p>
                             ${!passed ? `<button onclick="app.startQuiz()" class="text-indigo-600 font-bold hover:underline">Retake Quiz</button>` : ''}
                         </div>
@@ -859,12 +784,9 @@
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         <span class="font-semibold text-gray-900 truncate max-w-[200px]">${lesson.title}</span>
                     </div>
-
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-12">
                         <div class="${subject.bgColor} text-white p-8 sm:p-12 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-12 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-                                <i data-lucide="${subject.icon}" class="w-64 h-64 text-white"></i>
-                            </div>
+                            <div class="absolute top-0 right-0 p-12 opacity-10 transform translate-x-1/4 -translate-y-1/4"><i data-lucide="${subject.icon}" class="w-64 h-64 text-white"></i></div>
                             <div class="relative z-10">
                                 <button onclick="app.selectSubject('${subject.id}')" class="flex items-center gap-1 hover:bg-white/20 px-3 py-1 rounded-full transition-colors text-sm font-medium mb-6 w-fit">
                                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to ${subject.title}
@@ -876,15 +798,9 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="p-8 md:p-12 max-w-4xl mx-auto">
-                            <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 mb-12">
-                                ${lesson.content}
-                            </div>
-                            
-                            <div id="quiz-section" class="border-t border-gray-200 pt-12">
-                                ${quizHtml}
-                            </div>
+                            <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 mb-12">${lesson.content}</div>
+                            <div id="quiz-section" class="border-t border-gray-200 pt-12">${quizHtml}</div>
                         </div>
                     </div>
                 `;
@@ -893,18 +809,13 @@
 
             getSubjectProgress(subjectId) {
                 const subject = subjectsData[subjectId];
-                if (!subject) return 0;
-                const total = subject.subtopics.length;
-                if (total === 0) return 0;
+                if (!subject || subject.subtopics.length === 0) return 0;
                 const completed = subject.subtopics.filter(t => this.state.completedLessons.includes(t.id)).length;
-                return Math.round((completed / total) * 100);
+                return Math.round((completed / subject.subtopics.length) * 100);
             }
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            app.init();
-        });
-
+        document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
 </html>
